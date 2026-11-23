@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#15803d" />
+  <title>Dalından - Meyve Ağacı Haritası</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Yapay Zeka Görsel Doğrulama (TensorFlow + MobileNet) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #map { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; background: #e5e7eb; }
+    .leaflet-control-attribution { display: none !important; }
+    .custom-pin { display: flex; align-items: center; justify-content: center; border-radius: 9999px; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 16px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-stone-200 select-none">
+
+  <!-- Üst Menü -->
+  <div class="fixed top-0 left-0 right-0 z-[1000] p-3 pointer-events-none flex flex-col gap-2">
+    <div class="flex items-center gap-2 pointer-events-auto max-w-xl mx-auto w-full">
+      <div class="flex-1 bg-white shadow-lg rounded-2xl px-4 py-2.5 flex items-center gap-2 border border-stone-200">
+        <i class="fa-solid fa-seedling text-green-700 text-lg"></i>
+        <input id="searchInput" type="text" placeholder="Erik, dut, incir, ceviz ara..." class="w-full bg-transparent text-sm outline-none text-stone-800" />
+      </div>
+      <button type="button" id="profileBtn" class="bg-white shadow-lg rounded-2xl px-3.5 py-2.5 border border-stone-200 flex items-center gap-2 text-sm font-bold text-stone-800 active:scale-95 cursor-pointer">
+        <span id="userRankIcon">👤</span>
+        <span id="userBadgeText">Giriş</span>
+      </button>
+    </div>
+
+    <!-- Kategoriler -->
+    <div class="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto max-w-xl mx-auto w-full pb-1">
+      <button type="button" data-cat="all" class="cat-btn bg-green-700 text-white shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">Tümü</button>
+      <button type="button" data-cat="Erik" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🍏 Erik</button>
+      <button type="button" data-cat="Dut" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🫐 Dut</button>
+      <button type="button" data-cat="İncir" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🫒 İncir</button>
+      <button type="button" data-cat="Kiraz" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🍒 Kiraz</button>
+      <button type="button" data-cat="Nar" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🍎 Nar</button>
+      <button type="button" data-cat="Ceviz" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🌰 Ceviz</button>
+      <button type="button" data-cat="Böğürtlen" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🍇 Böğürtlen</button>
+      <button type="button" data-cat="Ihlamur" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🌿 Ihlamur</button>
+      <button type="button" data-cat="Diğer" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">🌳 Diğer</button>
+    </div>
+  </div>
+
+  <!-- Harita -->
+  <div id="map"></div>
+
+  <!-- Konum Butonu -->
+  <button type="button" id="locateBtn" class="fixed bottom-24 right-4 z-[1000] bg-white shadow-xl w-12 h-12 rounded-full flex items-center justify-center text-green-700 border border-stone-200 active:scale-90 cursor-pointer">
+    <i class="fa-solid fa-location-crosshairs text-lg"></i>
+  </button>
+
+  <!-- Ağaç Ekle Butonu -->
+  <div class="fixed bottom-5 left-0 right-0 z-[1000] px-4 flex justify-center pointer-events-none">
+    <button type="button" id="openAddModalBtn" class="pointer-events-auto bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 px-6 rounded-2xl shadow-2xl flex items-center gap-2.5 text-sm active:scale-95 cursor-pointer">
+      <i class="fa-solid fa-plus text-base"></i>
+      <span>Çevrendeki Ağacı Ekle</span>
+    </button>
+  </div>
+
+  <!-- Detay Modalı -->
+  <div id="detailModal" class="hidden fixed inset-0 z-[2000] bg-black/60 flex items-end justify-center">
+    <div class="bg-white w-full max-w-xl rounded-t-3xl p-5 max-h-[88vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-start gap-3 mb-3">
+        <div>
+          <div class="flex flex-wrap gap-1.5 mb-1">
+            <span id="detailStatusBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
+            <span id="detailRipenessBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
+          </div>
+          <h2 id="detailTitle" class="text-xl font-extrabold text-stone-900"></h2>
+          <p id="detailMeta" class="text-xs text-stone-500 mt-0.5"></p>
+        </div>
+        <button type="button" id="closeDetailBtn" class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <img id="detailImg" src="" alt="Ağaç" class="w-full h-48 object-cover rounded-2xl mb-3 bg-stone-200" />
+      <p id="detailNote" class="text-sm text-stone-700 bg-stone-50 p-3 rounded-xl border border-stone-100 mb-3"></p>
+
+      <!-- Olgunluk Durumu Güncelleme -->
+      <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 text-xs">
+        <span class="font-bold text-amber-900">Meyve Durumu:</span>
+        <div class="flex gap-1.5">
+          <button type="button" data-ripe="Olgun" class="ripe-update-btn bg-green-600 text-white px-2.5 py-1 rounded-lg font-bold cursor-pointer">Olgun</button>
+          <button type="button" data-ripe="Ham" class="ripe-update-btn bg-amber-500 text-white px-2.5 py-1 rounded-lg font-bold cursor-pointer">Ham</button>
+          <button type="button" data-ripe="Geçti" class="ripe-update-btn bg-stone-500 text-white px-2.5 py-1 rounded-lg font-bold cursor-pointer">Geçti</button>
+        </div>
+      </div>
+
+      <!-- Konum Doğrulama & Şikayet -->
+      <div class="bg-green-50 border border-green-200 rounded-2xl p-3.5 mb-3">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-bold text-green-900">Ağacın yanındaysan doğrula:</span>
+          <span id="verifyCounts" class="text-xs font-semibold text-green-700">0 Onay · 0 Şikayet</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="verifyYesBtn" class="bg-green-700 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-check"></i> Evet, Burada (+3 P)
+          </button>
+          <button type="button" id="verifyNoBtn" class="bg-white border border-red-200 text-red-600 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-flag"></i> Uygunsuz / Yok
+          </button>
+        </div>
+      </div>
+
+      <!-- Yönetici Silme Butonu (Sadece Admin Görür) -->
+      <button type="button" id="adminDeleteTreeBtn" class="hidden w-full bg-red-600 text-white text-xs font-extrabold py-3 rounded-xl flex items-center justify-center gap-2 mb-3 cursor-pointer shadow">
+        <i class="fa-solid fa-trash"></i> [YÖNETİCİ] Bu Kaydı Kalıcı Olarak Sil
+      </button>
+
+      <a id="directionsLink" href="#" target="_blank" class="w-full bg-stone-900 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
+        <i class="fa-solid fa-diamond-turn-right"></i> Yol Tarifi Al
+      </a>
+
+      <!-- Yorumlar -->
+      <div>
+        <h3 class="text-sm font-bold text-stone-800 mb-2">Yorumlar (+1 Puan)</h3>
+        <div id="commentsList" class="space-y-2 mb-3 max-h-40 overflow-y-auto"></div>
+        <form id="commentForm" class="flex gap-2">
+          <input id="commentInput" type="text" maxlength="180" placeholder="Yorum yaz..." class="flex-1 bg-stone-100 rounded-xl px-3.5 py-2.5 text-xs outline-none" required />
+          <button type="submit" class="bg-green-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer">Gönder</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ağaç Ekleme Modalı -->
+  <div id="addModal" class="hidden fixed inset-0 z-[2000] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-extrabold text-stone-900">Yeni Ağaç Ekle (+5 Puan)</h2>
+        <button type="button" id="closeAddModalBtn" class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="addTreeForm" class="space-y-3.5">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Ağaç Türü</label>
+            <select id="treeType" class="w-full bg-stone-100 rounded-xl px-3 py-2.5 text-sm outline-none font-medium" required>
+              <option value="Erik">🍏 Erik</option>
+              <option value="Dut">🫐 Dut / Karadut</option>
+              <option value="İncir">🫒 İncir</option>
+              <option value="Kiraz">🍒 Kiraz / Vişne</option>
+              <option value="Nar">🍎 Nar</option>
+              <option value="Ayva">🍐 Ayva / Armut</option>
+              <option value="Ceviz">🌰 Ceviz / Badem</option>
+              <option value="Böğürtlen">🍇 Böğürtlen</option>
+              <option value="Kuşburnu">🌹 Kuşburnu</option>
+              <option value="Ihlamur">🌿 Ihlamur</option>
+              <option value="Zeytin">🫒 Zeytin</option>
+              <option value="Diğer">🌳 Diğer</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-stone-700 mb-1">Olgunluk Durumu</label>
+            <select id="treeRipeness" class="w-full bg-stone-100 rounded-xl px-3 py-2.5 text-sm outline-none font-medium" required>
+              <option value="Olgun">🟢 Meyvesi Olgun</option>
+              <option value="Ham">🟡 Henüz Ham</option>
+              <option value="Geçti">⚪ Mevsimi Geçti</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Ağaç Fotoğrafı (Yapay Zeka Korumalı)</label>
+          <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-green-300 rounded-2xl bg-green-50 cursor-pointer overflow-hidden relative">
+            <img id="photoPreview" class="hidden w-full h-full object-cover" />
+            <div id="photoPlaceholder" class="flex flex-col items-center text-green-700 text-center px-4">
+              <i class="fa-solid fa-camera text-2xl mb-1"></i>
+              <span class="text-xs font-semibold">Sadece Ağaç veya Meyve Fotoğrafı Seç</span>
+              <span class="text-[10px] text-green-600 mt-0.5">Uygunsuz veya doğa dışı görseller otomatik reddedilir</span>
+            </div>
+            <input id="treePhoto" type="file" accept="image/*" capture="environment" class="hidden" required />
+          </label>
+          <p id="aiCheckStatus" class="hidden text-[11px] font-bold mt-1.5 text-center"></p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">Konum Tarifi / Not</label>
+          <input id="treeNote" type="text" maxlength="150" placeholder="Örn: Parkın güney girişinde" class="w-full bg-stone-100 rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+        </div>
+
+        <div class="bg-stone-100 p-3 rounded-xl flex items-center justify-between text-xs">
+          <span class="text-stone-600"><i class="fa-solid fa-location-dot text-green-700 mr-1"></i> <b id="selectedCoordsText">Mevcut Konum</b></span>
+          <button type="button" id="pickMapCenterBtn" class="text-green-700 font-bold underline cursor-pointer">Harita Merkezini Seç</button>
+        </div>
+
+        <button type="submit" id="submitTreeBtn" class="w-full bg-green-700 text-white font-bold py-3.5 rounded-2xl shadow-lg text-sm cursor-pointer disabled:opacity-50">
+          Haritaya Kaydet
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Giriş / Kayıt ve Kıdem Profili Modalı -->
+  <div id="authModal" class="hidden fixed inset-0 z-[2500] bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-extrabold text-stone-900">Hesabım</h2>
+        <button type="button" id="closeAuthModalBtn" class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="authForms">
+        <p class="text-xs text-stone-500 mb-4">Ağaç eklemek, doğrulamak ve kıdem atlamak için giriş yap veya kayıt ol.</p>
+        <form id="loginForm" class="space-y-3">
+          <input id="authName" type="text" placeholder="Adın (Kayıt için)" class="w-full bg-stone-100 rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <input id="authEmail" type="email" placeholder="E-posta adresin" class="w-full bg-stone-100 rounded-xl px-3.5 py-2.5 text-sm outline-none" required />
+          <input id="authPassword" type="password" placeholder="Şifren (en az 6 karakter)" class="w-full bg-stone-100 rounded-xl px-3.5 py-2.5 text-sm outline-none" required />
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="submit" id="btnLogin" class="bg-stone-900 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">Giriş Yap</button>
+            <button type="submit" id="btnRegister" class="bg-green-700 text-white font-bold py-2.5 rounded-xl text-xs cursor-pointer">Kayıt Ol</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Kıdem ve Profil Görünümü -->
+      <div id="profileView" class="hidden space-y-4">
+        <div id="adminBanner" class="hidden bg-red-600 text-white text-xs font-extrabold px-3 py-2 rounded-xl text-center">
+          🛡️ YÖNETİCİ HESABI AKTİF
+        </div>
+
+        <div class="bg-gradient-to-br from-green-50 to-emerald-100 border border-green-200 rounded-2xl p-4 text-center">
+          <div class="w-14 h-14 bg-white border-2 border-green-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-sm mb-2" id="profileRankEmoji">🌱</div>
+          <span id="profileRankBadge" class="inline-block bg-green-700 text-white text-[11px] font-extrabold px-3 py-0.5 rounded-full mb-1">Tohum</span>
+          <h3 id="profileDisplayName" class="font-extrabold text-stone-900 text-base">Kullanıcı</h3>
+          <p id="profileEmail" class="text-[11px] text-stone-500 mb-3"></p>
+
+          <div class="bg-white/80 rounded-xl p-2.5 text-left">
+            <div class="flex justify-between text-[11px] font-bold text-stone-700 mb-1">
+              <span id="profilePointsText">0 Puan</span>
+              <span id="nextRankText" class="text-green-700">Sonraki: Fidan (50 P)</span>
+            </div>
+            <div class="w-full bg-stone-200 h-2 rounded-full overflow-hidden">
+              <div id="rankProgressBar" class="bg-green-600 h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yönetici Şikayet / Moderasyon Listesi -->
+        <div id="adminPanelBox" class="hidden bg-red-50 border border-red-200 rounded-2xl p-3">
+          <div class="text-xs font-extrabold text-red-800 mb-2">🚨 Şikayet Edilen / Gizlenen Kayıtlar</div>
+          <div id="reportedList" class="space-y-2 text-xs max-h-36 overflow-y-auto"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-stone-100 p-2.5 rounded-xl">
+            <div id="statTrees" class="font-extrabold text-green-700 text-base">0</div>
+            <div class="text-[10px] text-stone-500 font-semibold">Paylaşım (+5)</div>
+          </div>
+          <div class="bg-stone-100 p-2.5 rounded-xl">
+            <div id="statVerifies" class="font-extrabold text-green-700 text-base">0</div>
+            <div class="text-[10px] text-stone-500 font-semibold">Onay (+3)</div>
+          </div>
+          <div class="bg-stone-100 p-2.5 rounded-xl">
+            <div id="statComments" class="font-extrabold text-green-700 text-base">0</div>
+            <div class="text-[10px] text-stone-500 font-semibold">Yorum (+1)</div>
+          </div>
+        </div>
+
+        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3">
+          <div class="text-[11px] font-bold text-stone-700 mb-2">Kıdem Basamakları (Her 50 Puan)</div>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between text-stone-600"><span>🌱 Tohum</span><span class="font-semibold">0 – 49 Puan</span></div>
+            <div class="flex justify-between text-stone-600"><span>🌿 Fidan</span><span class="font-semibold">50 – 99 Puan</span></div>
+            <div class="flex justify-between text-stone-600"><span>🧭 Doğa Kaşifi</span><span class="font-semibold">100 – 149 Puan</span></div>
+            <div class="flex justify-between text-stone-600"><span>🌳 Usta Toplayıcı</span><span class="font-semibold">150 – 199 Puan</span></div>
+            <div class="flex justify-between text-stone-600"><span>👑 Orman Koruyucusu</span><span class="font-semibold">200+ (Her +50 P)</span></div>
+          </div>
+        </div>
+
+        <button type="button" id="logoutBtn" class="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-xl text-xs cursor-pointer">Çıkış Yap</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Bildirimi -->
+  <div id="toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[3000] bg-stone-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl text-center max-w-xs"></div>
+
+  <script>
+    // BURAYA KENDİ YÖNETİCİ E-POSTA ADRESİNİ YAZ:
+    window.ADMIN_EMAIL = "hsynckm@gmail.com";
+
+    window.appState = {
+      userLocation: [40.7654, 29.9408],
+      hasRealGPS: false,
+      selectedCoords: null,
+      activeCategory: "all",
+      allTrees: [],
+      selectedTreeId: null,
+      compressedPhotoData: "",
+      photoVerifiedByAI: false,
+      authMode: "login",
+      currentUser: null,
+      aiModel: null
+    };
+
+    window.isAdmin = function() {
+      return window.appState.currentUser &&
+             window.appState.currentUser.email &&
+             window.appState.currentUser.email.toLowerCase() === window.ADMIN_EMAIL.toLowerCase();
+    };
+
+    // Türkçe Küfür ve Reklam Filtresi
+    window.containsBadContent = function(text) {
+      const lower = text.toLowerCase();
+      const banned = ["amk", "aq", "sik", "yarrak", "orospu", "piç", "göt", "meme", "porno", "seks", "escort", "bahis", "kumar", "http://", "https://", "www.", ".com", "05"];
+      return banned.some(w => lower.includes(w));
+    };
+
+    // İki GPS koordinatı arası mesafe (metre)
+    window.getDistanceMeters = function(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180;
+      const dp = (lat2 - lat1) * Math.PI / 180, dl = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dp/2)*Math.sin(dp/2) + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)*Math.sin(dl/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
+
+    // 50 puan ve katlarına göre kıdem hesaplama
+    window.calculateRank = function(points) {
+      const level = Math.floor(points / 50);
+      const nextMin = (level + 1) * 50;
+      const currentMin = level * 50;
+      const baseRanks = [
+        { name: "Tohum", emoji: "🌱" },
+        { name: "Fidan", emoji: "🌿" },
+        { name: "Doğa Kaşifi", emoji: "🧭" },
+        { name: "Usta Toplayıcı", emoji: "🌳" }
+      ];
+      let current, next;
+      if (level < baseRanks.length) {
+        current = { name: baseRanks[level].name, emoji: baseRanks[level].emoji, min: currentMin };
+      } else {
+        const tier = level - baseRanks.length + 1;
+        current = { name: `Orman Koruyucusu${tier > 1 ? ' ' + tier : ''}`, emoji: "👑", min: currentMin };
+      }
+      if (level + 1 < baseRanks.length) {
+        next = { name: baseRanks[level + 1].name, min: nextMin };
+      } else {
+        const nextTier = (level + 1) - baseRanks.length + 1;
+        next = { name: `Orman Koruyucusu${nextTier > 1 ? ' ' + nextTier : ''}`, min: nextMin };
+      }
+      return { current, next };
+    };
+
+    window.showToast = function(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.add("hidden"), 4000);
+    };
+
+    // Harita Başlatma
+    window.map = L.map("map", { zoomControl: false }).setView(window.appState.userLocation, 14);
+    const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(window.map);
+    osmLayer.on("tileerror", () => {
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(window.map);
+    });
+    setTimeout(() => window.map.invalidateSize(), 300);
+    window.markersLayer = L.layerGroup().addTo(window.map);
+
+    window.locateUser = function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          window.appState.userLocation = [pos.coords.latitude, pos.coords.longitude];
+          window.appState.hasRealGPS = true;
+          window.map.setView(window.appState.userLocation, 16);
+          L.circleMarker(window.appState.userLocation, { radius: 8, color: "#2563eb", fillColor: "#3b82f6", fillOpacity: 0.9 }).addTo(window.map);
+        }, () => window.showToast("Konum izni kapalı, varsayılan konum açıldı."));
+      }
+    };
+    window.locateUser();
+
+    // Yapay Zeka Modelini Arka Planda Yükle
+    if (window.mobilenet) {
+      mobilenet.load().then(model => { window.appState.aiModel = model; }).catch(() => {});
+    }
+
+    // Fotoğraf Seçimi + Yapay Zeka Doğa/Uygunsuzluk Kalkanı
+    document.getElementById("treePhoto").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById("aiCheckStatus");
+      const submitBtn = document.getElementById("submitTreeBtn");
+      statusEl.classList.remove("hidden", "text-red-600", "text-green-700");
+      statusEl.classList.add("text-amber-600");
+      statusEl.textContent = "🔍 Yapay zeka fotoğrafı kontrol ediyor...";
+      submitBtn.disabled = true;
+      window.appState.photoVerifiedByAI = false;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const scale = Math.min(1, 550 / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.65);
+
+          document.getElementById("photoPreview").src = compressed;
+          document.getElementById("photoPreview").classList.remove("hidden");
+          document.getElementById("photoPlaceholder").classList.add("hidden");
+
+          // AI Kontrolü
+          if (window.appState.aiModel) {
+            try {
+              const preds = await window.appState.aiModel.classify(img);
+              const labels = preds.map(p => p.className.toLowerCase()).join(", ");
+              const forbidden = ["bikini", "brassiere", "swimsuit", "maillot", "miniskirt", "lingerie", "screen", "monitor", "laptop", "television", "toilet", "bathroom", "bed"];
+              const isForbidden = forbidden.some(f => labels.includes(f));
+
+              if (isForbidden) {
+                statusEl.classList.replace("text-amber-600", "text-red-600");
+                statusEl.textContent = "❌ Uygunsuz veya doğa dışı görsel tespit edildi! Lütfen ağaç fotoğrafı seçin.";
+                window.appState.compressedPhotoData = "";
+                return;
+              }
+            } catch (err) {}
+          }
+
+          window.appState.compressedPhotoData = compressed;
+          window.appState.photoVerifiedByAI = true;
+          statusEl.classList.replace("text-amber-600", "text-green-700");
+          statusEl.textContent = "✅ Görsel doğrulandı, haritaya eklenebilir.";
+          submitBtn.disabled = false;
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("locateBtn").addEventListener("click", window.locateUser);
+    document.getElementById("profileBtn").addEventListener("click", () => document.getElementById("authModal").classList.remove("hidden"));
+    document.getElementById("closeAuthModalBtn").addEventListener("click", () => document.getElementById("authModal").classList.add("hidden"));
+    document.getElementById("closeAddModalBtn").addEventListener("click", () => document.getElementById("addModal").classList.add("hidden"));
+    document.getElementById("closeDetailBtn").addEventListener("click", () => {
+      document.getElementById("detailModal").classList.add("hidden");
+      window.appState.selectedTreeId = null;
+    });
+
+    document.getElementById("openAddModalBtn").addEventListener("click", () => {
+      if (!window.appState.currentUser) {
+        window.showToast("Ağaç eklemek için önce giriş yapmalısın!");
+        document.getElementById("authModal").classList.remove("hidden");
+        return;
+      }
+      window.appState.selectedCoords = window.appState.userLocation;
+      document.getElementById("selectedCoordsText").textContent = "Mevcut GPS Konumun";
+      document.getElementById("addModal").classList.remove("hidden");
+    });
+
+    document.getElementById("pickMapCenterBtn").addEventListener("click", () => {
+      const c = window.map.getCenter();
+      window.appState.selectedCoords = [c.lat, c.lng];
+      document.getElementById("selectedCoordsText").textContent = c.lat.toFixed(4) + ", " + c.lng.toFixed(4);
+      window.showToast("Harita merkezi seçildi.");
+    });
+
+    document.getElementById("btnLogin").addEventListener("click", () => { window.appState.authMode = "login"; });
+    document.getElementById("btnRegister").addEventListener("click", () => { window.appState.authMode = "register"; });
+
+    document.querySelectorAll(".cat-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".cat-btn").forEach(b => { b.classList.remove("bg-green-700", "text-white"); b.classList.add("bg-white", "text-stone-700"); });
+        btn.classList.remove("bg-white", "text-stone-700");
+        btn.classList.add("bg-green-700", "text-white");
+        window.appState.activeCategory = btn.dataset.cat;
+        if (window.renderMarkers) window.renderMarkers();
+      });
+    });
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      if (window.renderMarkers) window.renderMarkers();
+    });
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6-qrs97opQr4mIGpYpJbym0GH8wfT0u4",
+      authDomain: "planning-with-ai-78264.firebaseapp.com",
+      projectId: "planning-with-ai-78264",
+      storageBucket: "planning-with-ai-78264.firebasestorage.app",
+      messagingSenderId: "904197827686",
+      appId: "1:904197827686:web:cd70f221f318627b0bd1a7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const icons = { "Erik": "🍏", "Dut": "🫐", "İncir": "🫒", "Kiraz": "🍒", "Nar": "🍎", "Ayva": "🍐", "Ceviz": "🌰", "Böğürtlen": "🍇", "Kuşburnu": "🌹", "Ihlamur": "🌿", "Zeytin": "🫒", "Diğer": "🌳" };
+    const colors = { "Erik": "#16a34a", "Dut": "#6b21a8", "İncir": "#4d7c0f", "Kiraz": "#dc2626", "Nar": "#b91c1c", "Ayva": "#ca8a04", "Ceviz": "#78350f", "Böğürtlen": "#581c87", "Kuşburnu": "#e11d48", "Ihlamur": "#65a30d", "Zeytin": "#3f6212", "Diğer": "#047857" };
+
+    window.updateProfileAndRanks = function() {
+      const user = window.appState.currentUser;
+      const badge = document.getElementById("userBadgeText");
+      const rankIcon = document.getElementById("userRankIcon");
+
+      if (!user) {
+        badge.textContent = "Giriş";
+        rankIcon.textContent = "👤";
+        document.getElementById("authForms").classList.remove("hidden");
+        document.getElementById("profileView").classList.add("hidden");
+        return;
+      }
+
+      const trees = window.appState.allTrees || [];
+      const myTrees = trees.filter(t => t.userId === user.uid).length;
+      const myVerifies = trees.filter(t => t.userId !== user.uid && (t.verifiedBy || []).includes(user.uid)).length;
+      let myComments = 0;
+      trees.forEach(t => {
+        (t.comments || []).forEach(c => {
+          if (c.userId === user.uid || c.user === (user.displayName || user.email.split("@")[0])) myComments++;
+        });
+      });
+
+      const totalPoints = (myTrees * 5) + (myVerifies * 3) + (myComments * 1);
+      const { current, next } = window.calculateRank(totalPoints);
+
+      badge.textContent = user.displayName || user.email.split("@")[0];
+      rankIcon.textContent = window.isAdmin() ? "🛡️" : current.emoji;
+
+      document.getElementById("authForms").classList.add("hidden");
+      document.getElementById("profileView").classList.remove("hidden");
+      document.getElementById("profileDisplayName").textContent = user.displayName || user.email.split("@")[0];
+      document.getElementById("profileEmail").textContent = user.email;
+      document.getElementById("profileRankEmoji").textContent = current.emoji;
+      document.getElementById("profileRankBadge").textContent = current.name;
+      document.getElementById("profilePointsText").textContent = `${totalPoints} Puan`;
+      document.getElementById("statTrees").textContent = myTrees;
+      document.getElementById("statVerifies").textContent = myVerifies;
+      document.getElementById("statComments").textContent = myComments;
+      document.getElementById("nextRankText").textContent = `Sonraki: ${next.name} (${next.min} P)`;
+      document.getElementById("rankProgressBar").style.width = `${Math.min(100, Math.round(((totalPoints - current.min) / 50) * 100))}%`;
+
+      // Admin Paneli Kontrolü
+      if (window.isAdmin()) {
+        document.getElementById("adminBanner").classList.remove("hidden");
+        document.getElementById("adminPanelBox").classList.remove("hidden");
+        const reportedTrees = trees.filter(t => (t.reportedBy || []).length > 0);
+        const repList = document.getElementById("reportedList");
+        repList.innerHTML = reportedTrees.length === 0
+          ? `<p class="text-stone-500">Şikayet edilen kayıt yok.</p>`
+          : reportedTrees.map(t => `
+              <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-red-200">
+                <span><b>${t.type}</b> (${(t.reportedBy || []).length} şikayet)</span>
+                <button type="button" onclick="window.deleteTreeById('${t.id}')" class="bg-red-600 text-white px-2 py-1 rounded font-bold">Sil</button>
+              </div>
+            `).join("");
+      } else {
+        document.getElementById("adminBanner").classList.add("hidden");
+        document.getElementById("adminPanelBox").classList.add("hidden");
+      }
+    };
+
+    window.deleteTreeById = async function(id) {
+      if (!window.isAdmin()) return;
+      await deleteDoc(doc(db, "trees", id));
+      document.getElementById("detailModal").classList.add("hidden");
+      window.showToast("Kayıt yönetici tarafından kalıcı olarak silindi.");
+    };
+
+    onAuthStateChanged(auth, user => {
+      window.appState.currentUser = user;
+      window.updateProfileAndRanks();
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("authEmail").value.trim();
+      const pass = document.getElementById("authPassword").value;
+      const name = document.getElementById("authName").value.trim();
+      try {
+        if (window.appState.authMode === "register") {
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          if (name) await updateProfile(cred.user, { displayName: name });
+          window.showToast("Hoş geldin! 🌱 Tohum kıdemiyle başladın.");
+        } else {
+          await signInWithEmailAndPassword(auth, email, pass);
+          window.showToast("Tekrar hoş geldin!");
+        }
+        window.updateProfileAndRanks();
+        document.getElementById("authModal").classList.add("hidden");
+      } catch (err) {
+        window.showToast("Hata: " + err.message);
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      document.getElementById("authModal").classList.add("hidden");
+      window.showToast("Çıkış yapıldı.");
+    });
+
+    window.renderMarkers = function() {
+      window.markersLayer.clearLayers();
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      window.appState.allTrees.filter(t => {
+        // 3 veya daha fazla şikayet alan kayıtlar normal kullanıcılara gizlenir (Admin görür)
+        const isHiddenByReports = (t.reportedBy || []).length >= 3 && !window.isAdmin();
+        if (isHiddenByReports) return false;
+        const matchCat = window.appState.activeCategory === "all" || t.type === window.appState.activeCategory;
+        const matchSearch = !search || t.type.toLowerCase().includes(search) || (t.note || "").toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      }).forEach(tree => {
+        const iconHtml = `<div class="custom-pin" style="background:${colors[tree.type] || '#15803d'}; width:38px; height:38px;">${icons[tree.type] || '🌳'}</div>`;
+        const marker = L.marker([tree.lat, tree.lng], {
+          icon: L.divIcon({ html: iconHtml, className: "", iconSize: [38, 38], iconAnchor: [19, 19] })
+        });
+        marker.on("click", () => openTreeDetail(tree.id));
+        marker.addTo(window.markersLayer);
+      });
+    };
+
+    onSnapshot(query(collection(db, "trees"), orderBy("createdAt", "desc")), snapshot => {
+      window.appState.allTrees = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.renderMarkers();
+      window.updateProfileAndRanks();
+      if (window.appState.selectedTreeId) openTreeDetail(window.appState.selectedTreeId);
+    });
+
+    document.getElementById("addTreeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!window.appState.currentUser || !window.appState.compressedPhotoData || !window.appState.photoVerifiedByAI) {
+        return window.showToast("Lütfen doğa/ağaç fotoğrafı seçin.");
+      }
+      const note = document.getElementById("treeNote").value.trim();
+      if (window.containsBadContent(note)) {
+        return window.showToast("Notunuzda uygunsuz ifadeler tespit edildi!");
+      }
+
+      const btn = document.getElementById("submitTreeBtn");
+      btn.disabled = true;
+      btn.textContent = "Kaydediliyor...";
+      try {
+        await addDoc(collection(db, "trees"), {
+          type: document.getElementById("treeType").value,
+          ripeness: document.getElementById("treeRipeness").value,
+          note: note,
+          photo: window.appState.compressedPhotoData,
+          lat: window.appState.selectedCoords[0],
+          lng: window.appState.selectedCoords[1],
+          userId: window.appState.currentUser.uid,
+          userName: window.appState.currentUser.displayName || window.appState.currentUser.email.split("@")[0],
+          verifiedBy: [window.appState.currentUser.uid],
+          reportedBy: [],
+          comments: [],
+          createdAt: Date.now()
+        });
+        window.showToast("Ağaç eklendi! +5 Puan kazandın 🌱");
+        document.getElementById("addModal").classList.add("hidden");
+        document.getElementById("addTreeForm").reset();
+        document.getElementById("photoPreview").classList.add("hidden");
+        document.getElementById("photoPlaceholder").classList.remove("hidden");
+        document.getElementById("aiCheckStatus").classList.add("hidden");
+        window.appState.compressedPhotoData = "";
+      } catch (err) {
+        window.showToast("Kayıt hatası: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Haritaya Kaydet";
+      }
+    });
+
+    function openTreeDetail(id) {
+      const tree = window.appState.allTrees.find(t => t.id === id);
+      if (!tree) return;
+      window.appState.selectedTreeId = id;
+      const yesCount = (tree.verifiedBy || []).length;
+      const noCount = (tree.reportedBy || []).length;
+
+      const badge = document.getElementById("detailStatusBadge");
+      badge.textContent = yesCount >= 2 ? "✅ Topluluk Onaylı" : "🌱 Yeni Kayıt";
+      badge.className = "inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800";
+
+      const ripeBadge = document.getElementById("detailRipenessBadge");
+      const ripe = tree.ripeness || "Olgun";
+      ripeBadge.textContent = ripe === "Olgun" ? "🟢 Meyvesi Olgun" : (ripe === "Ham" ? "🟡 Henüz Ham" : "⚪ Mevsimi Geçti");
+      ripeBadge.className = "inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900";
+
+      document.getElementById("detailTitle").textContent = `${icons[tree.type] || '🌳'} ${tree.type} Ağacı`;
+      document.getElementById("detailMeta").textContent = `${tree.userName} tarafından eklendi`;
+      document.getElementById("detailImg").src = tree.photo;
+      document.getElementById("detailNote").textContent = tree.note || "Not bırakılmamış.";
+      document.getElementById("verifyCounts").textContent = `${yesCount} Onay · ${noCount} Şikayet`;
+      document.getElementById("directionsLink").href = `https://www.google.com/maps/dir/?api=1&destination=${tree.lat},${tree.lng}`;
+
+      const adminDelBtn = document.getElementById("adminDeleteTreeBtn");
+      if (window.isAdmin()) {
+        adminDelBtn.classList.remove("hidden");
+        adminDelBtn.onclick = () => window.deleteTreeById(tree.id);
+      } else {
+        adminDelBtn.classList.add("hidden");
+      }
+
+      const list = document.getElementById("commentsList");
+      const validComments = (tree.comments || []).filter(c => !c.hidden || window.isAdmin());
+      list.innerHTML = validComments.length === 0
+        ? `<p class="text-xs text-stone-400">Henüz yorum yok.</p>`
+        : validComments.map((c, idx) => `
+            <div class="bg-stone-50 p-2.5 rounded-xl text-xs flex justify-between items-start gap-2">
+              <div><b>${c.user}:</b> ${c.text}</div>
+              ${window.isAdmin() ? `<button type="button" onclick="window.deleteComment(${idx})" class="text-red-600 font-bold text-[10px]">Sil</button>` : ""}
+            </div>
+          `).join("");
+
+      document.getElementById("detailModal").classList.remove("hidden");
+    }
+
+    window.deleteComment = async function(idx) {
+      if (!window.isAdmin()) return;
+      const tree = window.appState.allTrees.find(t => t.id === window.appState.selectedTreeId);
+      if (!tree) return;
+      const updated = [...(tree.comments || [])];
+      updated.splice(idx, 1);
+      await updateDoc(doc(db, "trees", tree.id), { comments: updated });
+      window.showToast("Yorum silindi.");
+    };
+
+    // Olgunluk Durumu Güncelleme
+    document.querySelectorAll(".ripe-update-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
+        await updateDoc(doc(db, "trees", window.appState.selectedTreeId), { ripeness: btn.dataset.ripe });
+        window.showToast(`Durum "${btn.dataset.ripe}" olarak güncellendi!`);
+      });
+    });
+
+    // GPS Mesafe Kontrollü Onay (+3 Puan)
+    document.getElementById("verifyYesBtn").addEventListener("click", async () => {
+      if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
+      const tree = window.appState.allTrees.find(t => t.id === window.appState.selectedTreeId);
+      if (!tree) return;
+
+      if (!window.appState.hasRealGPS) {
+        return window.showToast("Konum doğrulaması için telefonunun GPS iznini açmalısın!");
+      }
+      const dist = window.getDistanceMeters(window.appState.userLocation[0], window.appState.userLocation[1], tree.lat, tree.lng);
+      if (dist > 100 && !window.isAdmin()) {
+        return window.showToast(`Ağaca ${Math.round(dist)}m uzaktasın. Onaylamak için en fazla 100m yakınında olmalısın!`);
+      }
+
+      await updateDoc(doc(db, "trees", window.appState.selectedTreeId), { verifiedBy: arrayUnion(window.appState.currentUser.uid) });
+      window.showToast("Yerinde onaylandı! +3 Puan ✅");
+    });
+
+    // Şikayet Et / Uygunsuz Bildir
+    document.getElementById("verifyNoBtn").addEventListener("click", async () => {
+      if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
+      await updateDoc(doc(db, "trees", window.appState.selectedTreeId), { reportedBy: arrayUnion(window.appState.currentUser.uid) });
+      window.showToast("Şikayetiniz alındı. 3 şikayette kayıt otomatik gizlenir.");
+    });
+
+    // Küfür Korumalı Yorum Gönderme (+1 Puan)
+    document.getElementById("commentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
+      const input = document.getElementById("commentInput");
+      const text = input.value.trim();
+      if (!text) return;
+      if (window.containsBadContent(text)) {
+        return window.showToast("Yorumunuzda uygunsuz ifadeler veya link tespit edildi!");
+      }
+      await updateDoc(doc(db, "trees", window.appState.selectedTreeId), {
+        comments: arrayUnion({
+          userId: window.appState.currentUser.uid,
+          user: window.appState.currentUser.displayName || window.appState.currentUser.email.split("@")[0],
+          text: text,
+          date: Date.now()
+        })
+      });
+      input.value = "";
+      window.showToast("Yorum eklendi! +1 Puan");
+    });
+  </script>
+</body>
+</html>
