@@ -31,6 +31,9 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.5);
       white-space: nowrap; padding: 0 4px;
     }
+    .pin-fresh-ripe {
+      box-shadow: 0 0 0 3px #22c55e, 0 4px 14px rgba(22, 163, 74, 0.55) !important;
+    }
     .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
       background-color: rgba(21, 128, 61, 0.3) !important;
     }
@@ -56,29 +59,43 @@
 
   <!-- Üst Menü -->
   <div class="fixed top-0 left-0 right-0 z-[1000] p-3 pointer-events-none flex flex-col gap-2">
-    <div class="flex items-center gap-2 pointer-events-auto max-w-xl mx-auto w-full">
-      <div class="flex-1 bg-white shadow-lg rounded-2xl px-3.5 py-2.5 flex items-center gap-2 border border-stone-200">
-        <i class="fa-solid fa-seedling text-green-700 text-lg"></i>
-        <input id="searchInput" type="text" placeholder="Erik, incir, kestane, çınar ara..." class="w-full bg-transparent text-sm outline-none text-stone-800" />
+    <div class="flex items-center gap-1.5 pointer-events-auto max-w-xl mx-auto w-full">
+      <div class="flex-1 bg-white shadow-lg rounded-2xl px-3 py-2.5 flex items-center gap-2 border border-stone-200 min-w-0">
+        <i class="fa-solid fa-seedling text-green-700 text-base shrink-0"></i>
+        <input id="searchInput" type="text" placeholder="Erik, incir, kestane, çınar..." class="w-full bg-transparent text-xs sm:text-sm outline-none text-stone-800" />
       </div>
 
+      <!-- Liderlik Tablosu Butonu -->
+      <button type="button" id="leaderboardBtn" title="Liderlik Tablosu" class="bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-amber-500 active:scale-95 cursor-pointer shrink-0">
+        <i class="fa-solid fa-trophy text-sm"></i>
+      </button>
+
+      <!-- Favorilerim Butonu -->
+      <button type="button" id="favoritesBtn" title="Kaydettiğim Ağaçlar" class="hidden bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-green-700 active:scale-95 cursor-pointer relative shrink-0">
+        <i class="fa-solid fa-bookmark text-sm"></i>
+        <span id="favBadgeCount" class="hidden absolute -top-1 -right-1 bg-green-700 text-white text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
+      </button>
+
       <!-- Bildirim Zili Butonu -->
-      <button type="button" id="notifBtn" class="hidden bg-white shadow-lg rounded-2xl w-11 h-11 border border-stone-200 flex items-center justify-center text-stone-700 active:scale-95 cursor-pointer relative shrink-0">
-        <i class="fa-solid fa-bell text-base"></i>
-        <span id="notifBadgeCount" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-extrabold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
+      <button type="button" id="notifBtn" title="Bildirimler" class="hidden bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-stone-700 active:scale-95 cursor-pointer relative shrink-0">
+        <i class="fa-solid fa-bell text-sm"></i>
+        <span id="notifBadgeCount" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
       </button>
 
       <!-- Profil Butonu -->
-      <button type="button" id="profileBtn" class="bg-white shadow-lg rounded-2xl px-3 py-2 h-11 border border-stone-200 flex items-center gap-2 text-sm font-bold text-stone-800 active:scale-95 cursor-pointer relative shrink-0">
+      <button type="button" id="profileBtn" class="bg-white shadow-lg rounded-2xl px-2.5 py-2 h-11 border border-stone-200 flex items-center gap-1.5 text-xs font-bold text-stone-800 active:scale-95 cursor-pointer relative shrink-0">
         <img id="topBarAvatar" class="hidden w-6 h-6 rounded-full object-cover border border-green-600 bg-green-50" />
         <span id="userRankIcon">👤</span>
-        <span id="userBadgeText" class="max-w-[85px] truncate">Giriş</span>
+        <span id="userBadgeText" class="max-w-[65px] truncate">Giriş</span>
         <span id="adminAlertDot" class="hidden w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
       </button>
     </div>
 
-    <!-- Sade Üst Kategori Çubuğu -->
-    <div class="flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto max-w-xl mx-auto w-full pb-1">
+    <!-- Üst Kategori Çubuğu + Sadece Olgunlar Filtresi -->
+    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto max-w-xl mx-auto w-full pb-1">
+      <button type="button" id="onlyRipeFilterBtn" class="bg-white text-emerald-800 border border-emerald-300 shadow px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap cursor-pointer flex items-center gap-1">
+        <span>🟢 Sadece Olgunlar</span>
+      </button>
       <button type="button" data-cat="all" class="cat-btn bg-green-700 text-white shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">Tümü</button>
       <button type="button" data-cat="Erik" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">Erik</button>
       <button type="button" data-cat="Dut" class="cat-btn bg-white text-stone-700 shadow px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer">Dut</button>
@@ -105,6 +122,40 @@
       <i class="fa-solid fa-camera text-base"></i>
       <span>Çevrendeki Ağacı Çek & Ekle</span>
     </button>
+  </div>
+
+  <!-- Favorilerim & Sınırsız Google Maps Rotası Modalı -->
+  <div id="favoritesModal" class="hidden fixed inset-0 z-[2600] bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-base font-extrabold text-stone-900 flex items-center gap-2">
+          <i class="fa-solid fa-bookmark text-green-700"></i> Kaydettiğim Ağaçlar
+        </h2>
+        <button type="button" id="closeFavModalBtn" class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="favListContainer" class="space-y-2.5 overflow-y-auto flex-1 pr-1 mb-3"></div>
+      <a id="multiRouteBtn" href="#" target="_blank" class="hidden w-full bg-green-700 hover:bg-green-800 text-white text-xs font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+        <i class="fa-solid fa-route text-sm"></i>
+        <span>Tüm Favorileri Tek Rotada Aç (Google Maps)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Liderlik Tablosu Modalı -->
+  <div id="leaderboardModal" class="hidden fixed inset-0 z-[2600] bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-base font-extrabold text-stone-900 flex items-center gap-2">
+          <i class="fa-solid fa-trophy text-amber-500"></i> Doğa Elçileri (İlk 10)
+        </h2>
+        <button type="button" id="closeLeaderboardBtn" class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="leaderboardListContainer" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
+    </div>
   </div>
 
   <!-- Bildirimler Modalı -->
@@ -145,11 +196,12 @@
             <span id="detailStatusBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
             <span id="detailRipenessBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
             <span id="detailDateBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700"></span>
+            <span id="detailDistBadge" class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700"></span>
           </div>
           <h2 id="detailTitle" class="text-xl font-extrabold text-stone-900"></h2>
           <button type="button" id="detailAuthorBtn" class="text-xs text-green-700 font-bold underline mt-0.5 cursor-pointer flex items-center gap-1.5 text-left"></button>
         </div>
-        <button type="button" id="closeDetailBtn" class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
+        <button type="button" id="closeDetailBtn" class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer shrink-0">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -162,17 +214,26 @@
 
       <p id="detailNote" class="text-sm text-stone-700 bg-stone-50 p-3 rounded-xl border border-stone-100 mb-3"></p>
 
-      <!-- Beğeni & Durum Güncelleme -->
-      <div class="flex items-center justify-between gap-2 bg-stone-50 border border-stone-200 rounded-xl p-2.5 mb-3">
-        <button type="button" id="likeTreeBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer">
-          <i id="likeHeartIcon" class="fa-regular fa-heart text-sm"></i>
-          <span id="likeCountText">Beğen (0)</span>
-        </button>
-        <div class="flex items-center gap-1 text-[11px]">
-          <button type="button" data-ripe="Olgun" class="ripe-update-btn bg-green-600 text-white px-2 py-1 rounded-lg font-bold cursor-pointer">Olgun</button>
-          <button type="button" data-ripe="Ham" class="ripe-update-btn bg-amber-500 text-white px-2 py-1 rounded-lg font-bold cursor-pointer">Ham</button>
-          <button type="button" data-ripe="Geçti" class="ripe-update-btn bg-stone-500 text-white px-2 py-1 rounded-lg font-bold cursor-pointer">Geçti</button>
+      <!-- Beğeni, Favoriye Kaydet & 15 Günlük Canlı Durum Güncelleme -->
+      <div class="bg-stone-50 border border-stone-200 rounded-xl p-2.5 mb-3 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <button type="button" id="likeTreeBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer">
+              <i id="likeHeartIcon" class="fa-regular fa-heart text-sm"></i>
+              <span id="likeCountText">Beğen (0)</span>
+            </button>
+            <button type="button" id="favTreeBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer">
+              <i id="favBookmarkIcon" class="fa-regular fa-bookmark text-sm"></i>
+              <span id="favBtnText">Kaydet</span>
+            </button>
+          </div>
+          <div class="flex items-center gap-1 text-[11px]">
+            <button type="button" data-ripe="Olgun" class="ripe-update-btn bg-green-600 text-white px-2.5 py-1.5 rounded-lg font-bold cursor-pointer">Olgun</button>
+            <button type="button" data-ripe="Ham" class="ripe-update-btn bg-amber-500 text-white px-2.5 py-1.5 rounded-lg font-bold cursor-pointer">Ham</button>
+            <button type="button" data-ripe="Geçti" class="ripe-update-btn bg-stone-500 text-white px-2.5 py-1.5 rounded-lg font-bold cursor-pointer">Geçti</button>
+          </div>
         </div>
+        <div id="ripenessTimerHint" class="text-[11px] text-stone-500 font-medium text-right"></div>
       </div>
 
       <!-- Konum Doğrulama & Şikayet -->
@@ -205,7 +266,7 @@
       </div>
 
       <a id="directionsLink" href="#" target="_blank" class="w-full bg-stone-900 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
-        <i class="fa-solid fa-diamond-turn-right"></i> Yol Tarifi Al
+        <i class="fa-solid fa-diamond-turn-right"></i> Google Maps ile Yol Tarifi Al
       </a>
 
       <!-- Yorumlar -->
@@ -220,7 +281,7 @@
     </div>
   </div>
 
-  <!-- Ağaç Ekleme Modalı (Sadece Canlı Arka Kamera Çekimi + Yakın Çevre GPS Kilidi) -->
+  <!-- Ağaç Ekleme Modalı -->
   <div id="addModal" class="hidden fixed inset-0 z-[2000] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center mb-4">
@@ -286,7 +347,6 @@
           </div>
         </div>
 
-        <!-- Sadece Canlı Kamera Çekimi (Galeri Yükleme Kapalı) -->
         <div>
           <div class="flex justify-between items-center mb-1">
             <label class="text-xs font-bold text-stone-700">Canlı Kamera Çekimi (En Fazla 3 Kare)</label>
@@ -329,7 +389,6 @@
         </button>
       </div>
 
-      <!-- Giriş / Kayıt Formu -->
       <div id="authForms">
         <p class="text-xs text-stone-500 mb-3">Gmail, Hotmail, Outlook veya iCloud e-posta adresinle giriş yap veya kayıt ol.</p>
         <form id="loginForm" class="space-y-3">
@@ -346,7 +405,6 @@
         </form>
       </div>
 
-      <!-- Sadeleştirilmiş Profil Görünümü -->
       <div id="profileView" class="hidden space-y-4">
         <div id="bannedWarningBanner" class="hidden bg-red-700 text-white text-xs font-extrabold p-3 rounded-xl text-center">
           🚫 Hesabınız topluluk kuralları ihlali nedeniyle kısıtlanmıştır.
@@ -356,7 +414,6 @@
           🛡️ YÖNETİCİ HESABI AKTİF
         </div>
 
-        <!-- Temiz Profil Kartı -->
         <div class="bg-gradient-to-br from-green-50 to-emerald-100 border border-green-200 rounded-2xl p-4 text-center">
           <img id="profileAvatarImg" class="hidden w-20 h-20 rounded-full object-cover border-2 border-green-700 mx-auto shadow bg-white" />
           <div id="profileRankEmoji" class="w-20 h-20 bg-white border-2 border-green-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-sm">🌱</div>
@@ -385,7 +442,6 @@
           </div>
         </div>
 
-        <!-- YÖNETİCİ DENETİM MERKEZİ (Sadece Admin Görür) -->
         <div id="adminPanelBox" class="hidden bg-red-50 border-2 border-red-300 rounded-2xl p-3 space-y-3">
           <div class="flex justify-between items-center">
             <span class="text-xs font-extrabold text-red-900">🚨 Şikayet & Denetim Merkezi</span>
@@ -398,7 +454,6 @@
           </div>
         </div>
 
-        <!-- İstatistikler -->
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="bg-stone-100 p-2.5 rounded-xl">
             <div id="statTrees" class="font-extrabold text-green-700 text-base">0</div>
@@ -429,7 +484,6 @@
         </button>
       </div>
 
-      <!-- Kendi Fotoğrafını Yükle -->
       <div class="bg-green-50 border border-green-200 rounded-2xl p-3.5 text-center">
         <div class="text-xs font-extrabold text-green-900 mb-2">Kendi Profil Fotoğrafın</div>
         <label class="inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow cursor-pointer">
@@ -440,13 +494,11 @@
         <p id="avatarAiStatus" class="hidden text-[10px] font-bold mt-2"></p>
       </div>
 
-      <!-- Sempatik Modern Karakter Avatarları (5 Kadın, 5 Erkek) -->
       <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3.5">
         <div class="text-xs font-extrabold text-stone-800 mb-2">Veya Sempatik Bir Karakter Seç:</div>
         <div id="presetAvatarsGrid" class="grid grid-cols-5 gap-2.5"></div>
       </div>
 
-      <!-- Şehir, Yaş, Cinsiyet -->
       <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3.5 space-y-2.5">
         <div class="text-xs font-extrabold text-stone-800">Kişisel Bilgiler (İsteğe Bağlı)</div>
         <div class="grid grid-cols-3 gap-2">
@@ -496,7 +548,6 @@
     // BURAYA KENDİ YÖNETİCİ E-POSTA ADRESİNİ YAZ:
     window.ADMIN_EMAIL = "hsynckm@gmail.com";
 
-    // Doğal Renkli Harita İmleçleri (4 harfe kadar tam isim)
     window.TREE_STYLES = {
       "Erik":      { label: "Erik",   color: "#65a30d", group: "Erik" },
       "Dut":       { label: "Dut",    color: "#581c87", group: "Dut" },
@@ -534,7 +585,6 @@
       "Diğer":     { label: "Ağaç",   color: "#047857", group: "Orman" }
     };
 
-    // 10 Adet Sempatik Modern Karakter Avatarı (5 Kadın, 5 Erkek)
     window.PRESET_AVATARS = (function() {
       const makeModernAvatar = ({ bg, shirt, skin, hair, style, glasses, blush }) => {
         let hairBack = "", hairFront = "", beard = "";
@@ -620,6 +670,7 @@
       hasRealGPS: false,
       selectedCoords: null,
       activeCategory: "all",
+      onlyFreshRipe: false,
       allTrees: [],
       allUsers: {},
       notifications: [],
@@ -631,6 +682,45 @@
       lastKnownLevel: null,
       mobileNetModel: null,
       cocoModel: null
+    };
+
+    // 15 Günlük Canlı Olgunluk Kontrolü (Ertesi yıl tekrarı yok)
+    window.getRipenessStatus = function(tree) {
+      const ripe = tree.ripeness || "Olgun";
+      const updatedTs = tree.ripenessUpdatedAt || tree.createdAt || 0;
+      const daysPassed = Math.floor((Date.now() - updatedTs) / 86400000);
+      if (ripe === "Olgun") {
+        if (daysPassed <= 15) {
+          const dayText = daysPassed === 0 ? "Bugün doğrulandı" : `${daysPassed} gün önce doğrulandı`;
+          return {
+            isFreshRipe: true,
+            badgeText: "🟢 Şu An Olgun",
+            badgeClass: "bg-emerald-100 text-emerald-800",
+            hintText: `✅ Güncel kayıt (${dayText} · ${15 - daysPassed} gün daha aktif)`
+          };
+        } else {
+          return {
+            isFreshRipe: false,
+            badgeText: "⚪ Süresi Doldu",
+            badgeClass: "bg-stone-200 text-stone-700",
+            hintText: `⏳ Son olgunluk kaydı ${daysPassed} gün önceydi (15 günlük süre doldu). Yanındaysan durumu güncelle!`
+          };
+        }
+      } else if (ripe === "Ham") {
+        return {
+          isFreshRipe: false,
+          badgeText: "🟡 Henüz Ham",
+          badgeClass: "bg-amber-100 text-amber-900",
+          hintText: daysPassed === 0 ? "Bugün ham olarak işaretlendi." : `${daysPassed} gün önce ham olarak işaretlendi.`
+        };
+      } else {
+        return {
+          isFreshRipe: false,
+          badgeText: "⚪ Mevsimi Geçti",
+          badgeClass: "bg-stone-100 text-stone-700",
+          hintText: daysPassed === 0 ? "Bugün mevsimi geçti olarak işaretlendi." : `${daysPassed} gün önce mevsimi geçti olarak işaretlendi.`
+        };
+      }
     };
 
     window.isAdmin = function() {
@@ -652,6 +742,11 @@
       } catch (e) {
         return "Tarih belirtilmemiş";
       }
+    };
+
+    window.formatDistanceText = function(meters) {
+      if (meters < 1000) return `${Math.round(meters)} m`;
+      return `${(meters / 1000).toFixed(1)} km`;
     };
 
     window.containsBadContent = function(text) {
@@ -806,7 +901,6 @@
       window.renderDraftPhotos();
     };
 
-    // Canlı Kamera Çekimi + 2 Dakika Zaman Damgası Kontrolü
     document.getElementById("treePhotoInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       e.target.value = "";
@@ -815,7 +909,6 @@
       const statusEl = document.getElementById("aiCheckStatus");
       statusEl.classList.remove("hidden", "text-red-600", "text-green-700");
 
-      // Dosya çekim zamanı kontrolü: Son 2 dakikadan (120.000 ms) eskiyse galeriden/internetten seçilmiştir
       const ageMs = Date.now() - (file.lastModified || Date.now());
       if (ageMs > 120000 && !window.isAdmin()) {
         statusEl.classList.add("text-red-600");
@@ -861,10 +954,32 @@
     document.getElementById("closeCelebBtn").addEventListener("click", () => document.getElementById("celebrationModal").classList.add("hidden"));
     document.getElementById("notifBtn").addEventListener("click", () => document.getElementById("notifModal").classList.remove("hidden"));
     document.getElementById("closeNotifBtn").addEventListener("click", () => document.getElementById("notifModal").classList.add("hidden"));
+    document.getElementById("favoritesBtn").addEventListener("click", () => {
+      if (window.renderFavoritesModal) window.renderFavoritesModal();
+      document.getElementById("favoritesModal").classList.remove("hidden");
+    });
+    document.getElementById("closeFavModalBtn").addEventListener("click", () => document.getElementById("favoritesModal").classList.add("hidden"));
+    document.getElementById("leaderboardBtn").addEventListener("click", () => {
+      if (window.renderLeaderboardModal) window.renderLeaderboardModal();
+      document.getElementById("leaderboardModal").classList.remove("hidden");
+    });
+    document.getElementById("closeLeaderboardBtn").addEventListener("click", () => document.getElementById("leaderboardModal").classList.add("hidden"));
     document.getElementById("closeDetailBtn").addEventListener("click", () => {
       document.getElementById("detailModal").classList.add("hidden");
       window.appState.selectedTreeId = null;
       window.appState.highlightedCommentIdx = null;
+    });
+
+    // Sadece Olgunlar Filtre Butonu
+    document.getElementById("onlyRipeFilterBtn").addEventListener("click", () => {
+      window.appState.onlyFreshRipe = !window.appState.onlyFreshRipe;
+      const btn = document.getElementById("onlyRipeFilterBtn");
+      if (window.appState.onlyFreshRipe) {
+        btn.className = "bg-emerald-600 text-white border border-emerald-700 shadow px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap cursor-pointer flex items-center gap-1";
+      } else {
+        btn.className = "bg-white text-emerald-800 border border-emerald-300 shadow px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap cursor-pointer flex items-center gap-1";
+      }
+      if (window.renderMarkers) window.renderMarkers();
     });
 
     document.getElementById("openAddModalBtn").addEventListener("click", () => {
@@ -883,7 +998,6 @@
       document.getElementById("addModal").classList.remove("hidden");
     });
 
-    // Yakın Çevre Konum Kilidi (Mevcut GPS konumundan en fazla 150 metre uzağa ince ayar izni)
     document.getElementById("pickMapCenterBtn").addEventListener("click", () => {
       const c = window.map.getCenter();
       const dist = window.getDistanceMeters(window.appState.userLocation[0], window.appState.userLocation[1], c.lat, c.lng);
@@ -1024,15 +1138,124 @@
       window.updateProfileAndRanks();
     });
 
+    // Favorilerim Modalını ve Sınırsız Çoklu Google Maps Rotasını Oluştur
+    window.renderFavoritesModal = function() {
+      const user = window.appState.currentUser;
+      const container = document.getElementById("favListContainer");
+      const multiBtn = document.getElementById("multiRouteBtn");
+      if (!user) return;
+
+      const uDoc = window.appState.allUsers[user.uid] || {};
+      const favIds = uDoc.favorites || [];
+      const favTrees = favIds.map(id => window.appState.allTrees.find(t => t.id === id)).filter(Boolean);
+
+      const badge = document.getElementById("favBadgeCount");
+      badge.textContent = favTrees.length;
+      badge.classList.toggle("hidden", favTrees.length === 0);
+
+      if (favTrees.length === 0) {
+        container.innerHTML = `<p class="text-xs text-stone-400 text-center py-8">Henüz kaydettiğin bir ağaç yok. Haritadan beğendiğin ağaçların detay kartındaki <b>Kaydet</b> butonuna basarak rotanı oluşturabilirsin.</p>`;
+        multiBtn.classList.add("hidden");
+        return;
+      }
+
+      container.innerHTML = favTrees.map(t => {
+        const firstPhoto = (t.photos && t.photos[0]) || t.photo;
+        const ripeInfo = window.getRipenessStatus(t);
+        const distMeters = window.getDistanceMeters(window.appState.userLocation[0], window.appState.userLocation[1], t.lat, t.lng);
+        const singleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lng}`;
+        return `
+          <div class="bg-stone-50 border border-stone-200 rounded-2xl p-2.5 flex items-center gap-2.5">
+            <img src="${firstPhoto}" onclick="document.getElementById('favoritesModal').classList.add('hidden'); window.map.setView([${t.lat}, ${t.lng}], 17); openTreeDetail('${t.id}')" class="w-14 h-14 rounded-xl object-cover bg-stone-200 shrink-0 cursor-pointer" />
+            <div class="flex-1 min-w-0">
+              <div class="font-extrabold text-stone-900 text-xs truncate">${t.type} Ağacı</div>
+              <div class="text-[10px] text-stone-500 mt-0.5">${ripeInfo.badgeText} · 📍 ${window.formatDistanceText(distMeters)}</div>
+              <div class="flex items-center gap-2 mt-1.5">
+                <a href="${singleMapsUrl}" target="_blank" class="bg-stone-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                  <i class="fa-solid fa-diamond-turn-right"></i> Yol Tarifi Al
+                </a>
+                <button type="button" onclick="window.toggleFavoriteTree('${t.id}')" class="text-red-600 text-[10px] font-bold underline cursor-pointer">Listeden Çıkar</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (favTrees.length >= 2) {
+        const limited = favTrees.slice(0, 9);
+        const dest = limited[limited.length - 1];
+        const waypoints = limited.slice(0, -1).map(w => `${w.lat},${w.lng}`).join("|");
+        multiBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&waypoints=${encodeURIComponent(waypoints)}`;
+        multiBtn.classList.remove("hidden");
+      } else {
+        multiBtn.classList.add("hidden");
+      }
+    };
+
+    window.toggleFavoriteTree = async function(treeId) {
+      if (!window.appState.currentUser) return window.showToast("Kaydetmek için giriş yapmalısın.");
+      const uid = window.appState.currentUser.uid;
+      const uDoc = window.appState.allUsers[uid] || {};
+      const favs = uDoc.favorites || [];
+      if (favs.includes(treeId)) {
+        await setDoc(doc(db, "users", uid), { favorites: arrayRemove(treeId) }, { merge: true });
+        window.showToast("Favorilerden çıkarıldı.");
+      } else {
+        await setDoc(doc(db, "users", uid), { favorites: arrayUnion(treeId) }, { merge: true });
+        window.showToast("Kaydettiğim Ağaçlar listesine eklendi! 🔖");
+      }
+    };
+
+    // Liderlik Tablosu Modalını Oluştur
+    window.renderLeaderboardModal = function() {
+      const container = document.getElementById("leaderboardListContainer");
+      const userIds = new Set(Object.keys(window.appState.allUsers || {}));
+      (window.appState.allTrees || []).forEach(t => { if (t.userId) userIds.add(t.userId); });
+
+      const ranked = Array.from(userIds).map(uid => {
+        const uDoc = window.appState.allUsers[uid] || {};
+        if (uDoc.banned) return null;
+        const stats = window.getUserStatsAndRank(uid);
+        const sampleTree = (window.appState.allTrees || []).find(t => t.userId === uid);
+        const name = uDoc.name || (sampleTree && sampleTree.userName) || "Doğa Sever";
+        return { uid, name, avatar: uDoc.avatar || "", ...stats };
+      }).filter(x => x && x.points > 0).sort((a, b) => b.points - a.points).slice(0, 10);
+
+      if (ranked.length === 0) {
+        container.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Henüz puan sıralaması oluşmadı.</p>`;
+        return;
+      }
+
+      container.innerHTML = ranked.map((u, idx) => {
+        const medal = idx === 0 ? "🥇" : (idx === 1 ? "🥈" : (idx === 2 ? "🥉" : `#${idx + 1}`));
+        const avHtml = u.avatar
+          ? `<img src="${u.avatar}" class="w-9 h-9 rounded-full object-cover border border-green-600 shrink-0" />`
+          : `<div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-base shrink-0">${u.current.emoji}</div>`;
+        return `
+          <div onclick="document.getElementById('leaderboardModal').classList.add('hidden'); window.openPublicUserProfile('${u.uid}')" class="flex items-center gap-2.5 p-2.5 rounded-2xl border ${idx < 3 ? 'bg-amber-50/70 border-amber-200' : 'bg-stone-50 border-stone-200'} cursor-pointer">
+            <span class="w-6 text-center font-black text-sm text-stone-700">${medal}</span>
+            ${avHtml}
+            <div class="flex-1 min-w-0">
+              <div class="font-extrabold text-stone-900 text-xs truncate">${u.name}</div>
+              <div class="text-[10px] text-green-700 font-bold">${u.current.name} · ${u.myTrees} Ağaç</div>
+            </div>
+            <span class="bg-green-700 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-xl">${u.points} P</span>
+          </div>
+        `;
+      }).join("");
+    };
+
+    // Puan Hesabı (+5 Ağaç, +3 Onay, +2 Durum Tazeleme, +1 Yorum)
     window.getUserStatsAndRank = function(uid) {
       const trees = window.appState.allTrees || [];
       const myTrees = trees.filter(t => t.userId === uid).length;
       const myVerifies = trees.filter(t => t.userId !== uid && (t.verifiedBy || []).includes(uid)).length;
+      const myFreshUpdates = trees.filter(t => t.ripenessUpdatedBy === uid && t.userId !== uid).length;
       let myComments = 0;
       trees.forEach(t => {
         (t.comments || []).forEach(c => { if (c.userId === uid) myComments++; });
       });
-      const points = (myTrees * 5) + (myVerifies * 3) + (myComments * 1);
+      const points = (myTrees * 5) + (myVerifies * 3) + (myFreshUpdates * 2) + (myComments * 1);
       return { myTrees, myVerifies, myComments, points, ...window.calculateRank(points) };
     };
 
@@ -1048,12 +1271,16 @@
         rankIcon.classList.remove("hidden");
         topAvatar.classList.add("hidden");
         document.getElementById("notifBtn").classList.add("hidden");
+        document.getElementById("favoritesBtn").classList.add("hidden");
         document.getElementById("authForms").classList.remove("hidden");
         document.getElementById("profileView").classList.add("hidden");
         return;
       }
 
       document.getElementById("notifBtn").classList.remove("hidden");
+      document.getElementById("favoritesBtn").classList.remove("hidden");
+      window.renderFavoritesModal();
+
       const uDoc = window.appState.allUsers[user.uid] || {};
       const stats = window.getUserStatsAndRank(user.uid);
       const displayName = uDoc.name || user.displayName || user.email.split("@")[0];
@@ -1371,6 +1598,8 @@
       window.appState.allTrees.filter(t => {
         const isHiddenByReports = (t.reportedBy || []).length >= 3 && !window.isAdmin();
         if (isHiddenByReports) return false;
+        const ripeInfo = window.getRipenessStatus(t);
+        if (window.appState.onlyFreshRipe && !ripeInfo.isFreshRipe) return false;
         const st = window.TREE_STYLES[t.type] || { label: t.type, color: "#15803d", group: "Orman" };
         const matchCat = window.appState.activeCategory === "all" ||
                          t.type === window.appState.activeCategory ||
@@ -1379,10 +1608,12 @@
         return matchCat && matchSearch;
       }).forEach(tree => {
         const st = window.TREE_STYLES[tree.type] || { label: tree.type, color: "#15803d" };
+        const ripeInfo = window.getRipenessStatus(tree);
         const textLen = st.label.length;
         const fontSize = textLen <= 4 ? "12px" : (textLen <= 6 ? "10px" : "9px");
         const pinSize = textLen <= 4 ? 42 : 48;
-        const iconHtml = `<div class="custom-pin" style="background:${st.color}; width:${pinSize}px; height:${pinSize}px; font-size:${fontSize};">${st.label}</div>`;
+        const extraClass = ripeInfo.isFreshRipe ? "pin-fresh-ripe" : "";
+        const iconHtml = `<div class="custom-pin ${extraClass}" style="background:${st.color}; width:${pinSize}px; height:${pinSize}px; font-size:${fontSize};">${st.label}</div>`;
         const marker = L.marker([tree.lat, tree.lng], {
           icon: L.divIcon({ html: iconHtml, className: "", iconSize: [pinSize, pinSize], iconAnchor: [pinSize / 2, pinSize / 2] })
         });
@@ -1421,10 +1652,13 @@
       const btn = document.getElementById("submitTreeBtn");
       btn.disabled = true;
       btn.textContent = "Kaydediliyor...";
+      const now = Date.now();
       try {
         await addDoc(collection(db, "trees"), {
           type: selectedType,
           ripeness: document.getElementById("treeRipeness").value,
+          ripenessUpdatedAt: now,
+          ripenessUpdatedBy: window.appState.currentUser.uid,
           note: note,
           photo: window.appState.draftPhotos[0],
           photos: window.appState.draftPhotos,
@@ -1436,7 +1670,7 @@
           reportedBy: [],
           likedBy: [],
           comments: [],
-          createdAt: Date.now()
+          createdAt: now
         });
 
         document.getElementById("addModal").classList.add("hidden");
@@ -1468,18 +1702,24 @@
       const likes = tree.likedBy || [];
       const isLikedByMe = window.appState.currentUser && likes.includes(window.appState.currentUser.uid);
 
+      const uDoc = window.appState.currentUser ? (window.appState.allUsers[window.appState.currentUser.uid] || {}) : {};
+      const isFavByMe = (uDoc.favorites || []).includes(tree.id);
+
       const badge = document.getElementById("detailStatusBadge");
       badge.textContent = yesCount >= 2 ? "✅ Topluluk Onaylı" : "🌱 Yeni Kayıt";
       badge.className = "inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800";
 
+      // 15 Günlük Canlı Olgunluk Durumu Rozeti
+      const ripeInfo = window.getRipenessStatus(tree);
       const ripeBadge = document.getElementById("detailRipenessBadge");
-      const ripe = tree.ripeness || "Olgun";
-      ripeBadge.textContent = ripe === "Olgun" ? "🟢 Meyvesi Olgun" : (ripe === "Ham" ? "🟡 Henüz Ham" : "⚪ Mevsimi Geçti");
-      ripeBadge.className = "inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900";
+      ripeBadge.textContent = ripeInfo.badgeText;
+      ripeBadge.className = `inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full ${ripeInfo.badgeClass}`;
+      document.getElementById("ripenessTimerHint").textContent = ripeInfo.hintText;
 
-      // Paylaşım Tarihi Rozeti
-      const dateBadge = document.getElementById("detailDateBadge");
-      dateBadge.textContent = `📅 ${window.formatDateTR(tree.createdAt)}`;
+      document.getElementById("detailDateBadge").textContent = `📅 ${window.formatDateTR(tree.createdAt)}`;
+
+      const distMeters = window.getDistanceMeters(window.appState.userLocation[0], window.appState.userLocation[1], tree.lat, tree.lng);
+      document.getElementById("detailDistBadge").textContent = `📍 ${window.formatDistanceText(distMeters)}`;
 
       document.getElementById("detailTitle").textContent = `${tree.type} Ağacı`;
 
@@ -1487,6 +1727,7 @@
       authorBtn.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${tree.userName} (Profilini Gör)`;
       authorBtn.onclick = () => window.openPublicUserProfile(tree.userId);
 
+      // Beğen Butonu
       const likeBtn = document.getElementById("likeTreeBtn");
       const heartIcon = document.getElementById("likeHeartIcon");
       document.getElementById("likeCountText").textContent = `Beğen (${likes.length})`;
@@ -1508,6 +1749,19 @@
           await window.sendNotification(tree.userId, tree.id, tree.type, "like", "");
         }
       };
+
+      // Favoriye Kaydet Butonu
+      const favBtn = document.getElementById("favTreeBtn");
+      const favIcon = document.getElementById("favBookmarkIcon");
+      document.getElementById("favBtnText").textContent = isFavByMe ? "Kaydedildi" : "Kaydet";
+      if (isFavByMe) {
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-green-400 bg-green-50 text-green-800 cursor-pointer";
+        favIcon.className = "fa-solid fa-bookmark text-sm text-green-700";
+      } else {
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer";
+        favIcon.className = "fa-regular fa-bookmark text-sm";
+      }
+      favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
 
       const photos = (tree.photos && tree.photos.length > 0) ? tree.photos : [tree.photo];
       document.getElementById("detailImg").src = photos[0];
@@ -1609,12 +1863,17 @@
       window.showToast("Yorum kalıcı olarak silindi.");
     };
 
+    // Olgun / Ham / Geçti Güncelleme (15 Günlük Sayacı Sıfırlar +2 Puan)
     document.querySelectorAll(".ripe-update-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
         if (window.isCurrentUserBanned()) return window.showToast("Hesabınız kısıtlı.");
-        await updateDoc(doc(db, "trees", window.appState.selectedTreeId), { ripeness: btn.dataset.ripe });
-        window.showToast(`Durum "${btn.dataset.ripe}" olarak güncellendi!`);
+        await updateDoc(doc(db, "trees", window.appState.selectedTreeId), {
+          ripeness: btn.dataset.ripe,
+          ripenessUpdatedAt: Date.now(),
+          ripenessUpdatedBy: window.appState.currentUser.uid
+        });
+        window.showToast(`Durum "${btn.dataset.ripe}" olarak güncellendi! (+2 Puan)`);
       });
     });
 
