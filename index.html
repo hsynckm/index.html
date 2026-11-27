@@ -8,14 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Üst üste binen iğneleri örümcek ağı gibi açan MarkerCluster eklentisi -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <!-- Kutlama konfeti animasyonu -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <!-- Yapay Zeka Görsel Doğrulama Modelleri -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
@@ -65,24 +62,20 @@
         <input id="searchInput" type="text" placeholder="Erik, incir, kestane, çınar..." class="w-full bg-transparent text-xs sm:text-sm outline-none text-stone-800" />
       </div>
 
-      <!-- Liderlik Tablosu Butonu -->
       <button type="button" id="leaderboardBtn" title="Liderlik Tablosu" class="bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-amber-500 active:scale-95 cursor-pointer shrink-0">
         <i class="fa-solid fa-trophy text-sm"></i>
       </button>
 
-      <!-- Favorilerim Butonu -->
       <button type="button" id="favoritesBtn" title="Kaydettiğim Ağaçlar" class="hidden bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-green-700 active:scale-95 cursor-pointer relative shrink-0">
         <i class="fa-solid fa-bookmark text-sm"></i>
-        <span id="favBadgeCount" class="hidden absolute -top-1 -right-1 bg-amber-500 text-amber-950 text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
+        <span id="favBadgeCount" class="hidden absolute -top-1 -right-1 bg-amber-400 text-amber-950 text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
       </button>
 
-      <!-- Bildirim Zili Butonu -->
       <button type="button" id="notifBtn" title="Bildirimler" class="hidden bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-stone-700 active:scale-95 cursor-pointer relative shrink-0">
         <i class="fa-solid fa-bell text-sm"></i>
         <span id="notifBadgeCount" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
       </button>
 
-      <!-- Profil Butonu -->
       <button type="button" id="profileBtn" class="bg-white shadow-lg rounded-2xl px-2.5 py-2 h-11 border border-stone-200 flex items-center gap-1.5 text-xs font-bold text-stone-800 active:scale-95 cursor-pointer relative shrink-0">
         <img id="topBarAvatar" class="hidden w-6 h-6 rounded-full object-cover border border-green-600 bg-green-50" />
         <span id="userRankIcon">👤</span>
@@ -124,7 +117,7 @@
     </button>
   </div>
 
-  <!-- Favorilerim & Sınırsız Google Maps Rotası Modalı -->
+  <!-- Favorilerim Modalı -->
   <div id="favoritesModal" class="hidden fixed inset-0 z-[2600] bg-black/60 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
@@ -176,7 +169,7 @@
     </div>
   </div>
 
-  <!-- Kutlama & Kıdem Atlama Ekranı -->
+  <!-- Kutlama Modalı -->
   <div id="celebrationModal" class="hidden fixed inset-0 z-[3500] bg-black/75 flex items-center justify-center p-5">
     <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl border-4 border-amber-400 relative">
       <div id="celebBadgeEmoji" class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-100 to-green-100 border-4 border-amber-400 flex items-center justify-center mx-auto text-5xl mb-3 shadow-lg">🎉</div>
@@ -206,7 +199,6 @@
         </button>
       </div>
 
-      <!-- Ana Fotoğraf ve 3'lü Galeri -->
       <div class="mb-3">
         <img id="detailImg" src="" alt="Ağaç" class="w-full h-52 object-cover rounded-2xl bg-stone-200 border border-stone-200" />
         <div id="detailGalleryThumbs" class="flex gap-2 mt-2"></div>
@@ -214,7 +206,7 @@
 
       <p id="detailNote" class="text-sm text-stone-700 bg-stone-50 p-3 rounded-xl border border-stone-100 mb-3"></p>
 
-      <!-- Beğeni, Favoriye Kaydet & 15 Günlük Canlı Durum Güncelleme -->
+      <!-- Beğeni, Favoriye Kaydet & Durum Güncelleme -->
       <div class="bg-stone-50 border border-stone-200 rounded-xl p-2.5 mb-3 space-y-2">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-1.5">
@@ -807,7 +799,6 @@
       window._toastTimer = setTimeout(() => t.classList.add("hidden"), 4500);
     };
 
-    // Harita ve MarkerCluster
     window.map = L.map("map", { zoomControl: false }).setView(window.appState.userLocation, 14);
     const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(window.map);
     osmLayer.on("tileerror", () => {
@@ -845,7 +836,6 @@
     };
     window.locateUser();
 
-    // Yapay Zeka Modelleri
     if (window.mobilenet) mobilenet.load().then(m => { window.appState.mobileNetModel = m; }).catch(() => {});
     if (window.cocoSsd) cocoSsd.load().then(m => { window.appState.cocoModel = m; }).catch(() => {});
 
@@ -1134,19 +1124,16 @@
       snap.docs.forEach(d => { mapUsers[d.id] = { uid: d.id, ...d.data() }; });
       window.appState.allUsers = mapUsers;
       window.updateProfileAndRanks();
-      // Açık detay kartı varsa favori rengini anında yenile
-      if (window.appState.selectedTreeId) openTreeDetail(window.appState.selectedTreeId);
     });
 
+    // Favorilerim Modalı ve Üst Menü Rozeti (Doğrudan ağaçların savedBy dizisinden okunur)
     window.renderFavoritesModal = function() {
       const user = window.appState.currentUser;
       const container = document.getElementById("favListContainer");
       const multiBtn = document.getElementById("multiRouteBtn");
       if (!user) return;
 
-      const uDoc = window.appState.allUsers[user.uid] || {};
-      const favIds = uDoc.favorites || [];
-      const favTrees = favIds.map(id => window.appState.allTrees.find(t => t.id === id)).filter(Boolean);
+      const favTrees = (window.appState.allTrees || []).filter(t => (t.savedBy || []).includes(user.uid));
 
       const badge = document.getElementById("favBadgeCount");
       badge.textContent = favTrees.length;
@@ -1177,7 +1164,7 @@
                 <a href="${singleMapsUrl}" target="_blank" class="bg-stone-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
                   <i class="fa-solid fa-diamond-turn-right"></i> Yol Tarifi Al
                 </a>
-                <button type="button" onclick="window.toggleFavoriteTree('${t.id}')" class="text-red-600 text-[10px] font-bold underline cursor-pointer">Listeden Çıkar</button>
+                <button type="button" onclick="window.removeFromSavedList('${t.id}')" class="text-red-600 text-[10px] font-bold underline cursor-pointer">Listeden Çıkar</button>
               </div>
             </div>
           </div>
@@ -1195,34 +1182,10 @@
       }
     };
 
-    window.toggleFavoriteTree = async function(treeId) {
-      if (!window.appState.currentUser) return window.showToast("Kaydetmek için giriş yapmalısın.");
-      const uid = window.appState.currentUser.uid;
-      if (!window.appState.allUsers[uid]) window.appState.allUsers[uid] = { uid, favorites: [] };
-      const currentFavs = [...(window.appState.allUsers[uid].favorites || [])];
-      const alreadyFav = currentFavs.includes(treeId);
-
-      // Ekranda gecikme olmaması için yerel durumu anında güncelle ve butonu boya
-      if (alreadyFav) {
-        window.appState.allUsers[uid].favorites = currentFavs.filter(x => x !== treeId);
-      } else {
-        window.appState.allUsers[uid].favorites = [...currentFavs, treeId];
-      }
-      window.renderFavoritesModal();
-      if (window.appState.selectedTreeId === treeId) openTreeDetail(treeId);
-
-      // Ardından veritabanına kaydet
-      try {
-        if (alreadyFav) {
-          await setDoc(doc(db, "users", uid), { favorites: arrayRemove(treeId) }, { merge: true });
-          window.showToast("Favorilerden çıkarıldı.");
-        } else {
-          await setDoc(doc(db, "users", uid), { favorites: arrayUnion(treeId) }, { merge: true });
-          window.showToast("Kaydettiğim Ağaçlar listesine eklendi! 🔖");
-        }
-      } catch (e) {
-        window.showToast("Kaydetme hatası: Bağlantını kontrol et.");
-      }
+    window.removeFromSavedList = async function(treeId) {
+      if (!window.appState.currentUser) return;
+      await updateDoc(doc(db, "trees", treeId), { savedBy: arrayRemove(window.appState.currentUser.uid) });
+      window.showToast("Favorilerden çıkarıldı.");
     };
 
     window.renderLeaderboardModal = function() {
@@ -1686,6 +1649,7 @@
           verifiedBy: [window.appState.currentUser.uid],
           reportedBy: [],
           likedBy: [],
+          savedBy: [],
           comments: [],
           createdAt: now
         });
@@ -1717,10 +1681,9 @@
       const yesCount = (tree.verifiedBy || []).length;
       const noCount = (tree.reportedBy || []).length;
       const likes = tree.likedBy || [];
+      const saves = tree.savedBy || [];
       const isLikedByMe = window.appState.currentUser && likes.includes(window.appState.currentUser.uid);
-
-      const uDoc = window.appState.currentUser ? (window.appState.allUsers[window.appState.currentUser.uid] || {}) : {};
-      const isFavByMe = (uDoc.favorites || []).includes(tree.id);
+      const isSavedByMe = window.appState.currentUser && saves.includes(window.appState.currentUser.uid);
 
       const badge = document.getElementById("detailStatusBadge");
       badge.textContent = yesCount >= 2 ? "✅ Topluluk Onaylı" : "🌱 Yeni Kayıt";
@@ -1743,6 +1706,7 @@
       authorBtn.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${tree.userName} (Profilini Gör)`;
       authorBtn.onclick = () => window.openPublicUserProfile(tree.userId);
 
+      // Beğen Butonu
       const likeBtn = document.getElementById("likeTreeBtn");
       const heartIcon = document.getElementById("likeHeartIcon");
       document.getElementById("likeCountText").textContent = `Beğen (${likes.length})`;
@@ -1765,18 +1729,28 @@
         }
       };
 
-      // Favoriye Kaydet Butonu (Anında Altın Sarısı Renk Değişimi)
+      // Kaydet Butonu (Beğen butonuyla birebir aynı çalışma mantığı — Altın Sarısı)
       const favBtn = document.getElementById("favTreeBtn");
       const favIcon = document.getElementById("favBookmarkIcon");
-      document.getElementById("favBtnText").textContent = isFavByMe ? "Kaydedildi" : "Kaydet";
-      if (isFavByMe) {
-        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-amber-500 bg-amber-400 text-amber-950 shadow-sm cursor-pointer transition";
+      document.getElementById("favBtnText").textContent = isSavedByMe ? "Kaydedildi" : "Kaydet";
+      if (isSavedByMe) {
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-amber-500 bg-amber-400 text-amber-950 shadow-sm cursor-pointer";
         favIcon.className = "fa-solid fa-bookmark text-sm text-amber-950";
       } else {
-        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer transition";
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer";
         favIcon.className = "fa-regular fa-bookmark text-sm text-stone-600";
       }
-      favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
+      favBtn.onclick = async () => {
+        if (!window.appState.currentUser) return window.showToast("Kaydetmek için giriş yapmalısın.");
+        const uid = window.appState.currentUser.uid;
+        if (saves.includes(uid)) {
+          await updateDoc(doc(db, "trees", tree.id), { savedBy: arrayRemove(uid) });
+          window.showToast("Favorilerden çıkarıldı.");
+        } else {
+          await updateDoc(doc(db, "trees", tree.id), { savedBy: arrayUnion(uid) });
+          window.showToast("Kaydettiğim Ağaçlar listesine eklendi! 🔖");
+        }
+      };
 
       const photos = (tree.photos && tree.photos.length > 0) ? tree.photos : [tree.photo];
       document.getElementById("detailImg").src = photos[0];
