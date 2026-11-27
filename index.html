@@ -1751,16 +1751,19 @@
       };
 
       // Favoriye Kaydet Butonu
+          // Favoriye Kaydet Butonu (Kaydedildiğinde Altın Sarısı)
       const favBtn = document.getElementById("favTreeBtn");
       const favIcon = document.getElementById("favBookmarkIcon");
       document.getElementById("favBtnText").textContent = isFavByMe ? "Kaydedildi" : "Kaydet";
       if (isFavByMe) {
-        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-green-400 bg-green-50 text-green-800 cursor-pointer";
-        favIcon.className = "fa-solid fa-bookmark text-sm text-green-700";
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-amber-500 bg-amber-400 text-amber-950 shadow-sm cursor-pointer transition";
+        favIcon.className = "fa-solid fa-bookmark text-sm text-amber-950";
       } else {
-        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer";
-        favIcon.className = "fa-regular fa-bookmark text-sm";
+        favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer transition";
+        favIcon.className = "fa-regular fa-bookmark text-sm text-stone-600";
       }
+      favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
+
       favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
 
       const photos = (tree.photos && tree.photos.length > 0) ? tree.photos : [tree.photo];
