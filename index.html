@@ -73,7 +73,7 @@
       <!-- Favorilerim Butonu -->
       <button type="button" id="favoritesBtn" title="Kaydettiğim Ağaçlar" class="hidden bg-white shadow-lg rounded-2xl w-10 h-11 border border-stone-200 flex items-center justify-center text-green-700 active:scale-95 cursor-pointer relative shrink-0">
         <i class="fa-solid fa-bookmark text-sm"></i>
-        <span id="favBadgeCount" class="hidden absolute -top-1 -right-1 bg-green-700 text-white text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
+        <span id="favBadgeCount" class="hidden absolute -top-1 -right-1 bg-amber-500 text-amber-950 text-[10px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white">0</span>
       </button>
 
       <!-- Bildirim Zili Butonu -->
@@ -129,7 +129,7 @@
     <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-base font-extrabold text-stone-900 flex items-center gap-2">
-          <i class="fa-solid fa-bookmark text-green-700"></i> Kaydettiğim Ağaçlar
+          <i class="fa-solid fa-bookmark text-amber-500"></i> Kaydettiğim Ağaçlar
         </h2>
         <button type="button" id="closeFavModalBtn" class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center cursor-pointer">
           <i class="fa-solid fa-xmark"></i>
@@ -546,7 +546,7 @@
 
   <script>
     // BURAYA KENDİ YÖNETİCİ E-POSTA ADRESİNİ YAZ:
-    window.ADMIN_EMAIL = "hsynckm@gmail.com";
+    window.ADMIN_EMAIL = "BURAYA_KENDI_EPOSTANI_YAZ@gmail.com";
 
     window.TREE_STYLES = {
       "Erik":      { label: "Erik",   color: "#65a30d", group: "Erik" },
@@ -684,7 +684,6 @@
       cocoModel: null
     };
 
-    // 15 Günlük Canlı Olgunluk Kontrolü (Ertesi yıl tekrarı yok)
     window.getRipenessStatus = function(tree) {
       const ripe = tree.ripeness || "Olgun";
       const updatedTs = tree.ripenessUpdatedAt || tree.createdAt || 0;
@@ -970,7 +969,6 @@
       window.appState.highlightedCommentIdx = null;
     });
 
-    // Sadece Olgunlar Filtre Butonu
     document.getElementById("onlyRipeFilterBtn").addEventListener("click", () => {
       window.appState.onlyFreshRipe = !window.appState.onlyFreshRipe;
       const btn = document.getElementById("onlyRipeFilterBtn");
@@ -1136,9 +1134,10 @@
       snap.docs.forEach(d => { mapUsers[d.id] = { uid: d.id, ...d.data() }; });
       window.appState.allUsers = mapUsers;
       window.updateProfileAndRanks();
+      // Açık detay kartı varsa favori rengini anında yenile
+      if (window.appState.selectedTreeId) openTreeDetail(window.appState.selectedTreeId);
     });
 
-    // Favorilerim Modalını ve Sınırsız Çoklu Google Maps Rotasını Oluştur
     window.renderFavoritesModal = function() {
       const user = window.appState.currentUser;
       const container = document.getElementById("favListContainer");
@@ -1152,6 +1151,10 @@
       const badge = document.getElementById("favBadgeCount");
       badge.textContent = favTrees.length;
       badge.classList.toggle("hidden", favTrees.length === 0);
+
+      const favTopBtn = document.getElementById("favoritesBtn");
+      favTopBtn.classList.toggle("text-amber-500", favTrees.length > 0);
+      favTopBtn.classList.toggle("text-green-700", favTrees.length === 0);
 
       if (favTrees.length === 0) {
         container.innerHTML = `<p class="text-xs text-stone-400 text-center py-8">Henüz kaydettiğin bir ağaç yok. Haritadan beğendiğin ağaçların detay kartındaki <b>Kaydet</b> butonuna basarak rotanı oluşturabilirsin.</p>`;
@@ -1195,18 +1198,33 @@
     window.toggleFavoriteTree = async function(treeId) {
       if (!window.appState.currentUser) return window.showToast("Kaydetmek için giriş yapmalısın.");
       const uid = window.appState.currentUser.uid;
-      const uDoc = window.appState.allUsers[uid] || {};
-      const favs = uDoc.favorites || [];
-      if (favs.includes(treeId)) {
-        await setDoc(doc(db, "users", uid), { favorites: arrayRemove(treeId) }, { merge: true });
-        window.showToast("Favorilerden çıkarıldı.");
+      if (!window.appState.allUsers[uid]) window.appState.allUsers[uid] = { uid, favorites: [] };
+      const currentFavs = [...(window.appState.allUsers[uid].favorites || [])];
+      const alreadyFav = currentFavs.includes(treeId);
+
+      // Ekranda gecikme olmaması için yerel durumu anında güncelle ve butonu boya
+      if (alreadyFav) {
+        window.appState.allUsers[uid].favorites = currentFavs.filter(x => x !== treeId);
       } else {
-        await setDoc(doc(db, "users", uid), { favorites: arrayUnion(treeId) }, { merge: true });
-        window.showToast("Kaydettiğim Ağaçlar listesine eklendi! 🔖");
+        window.appState.allUsers[uid].favorites = [...currentFavs, treeId];
+      }
+      window.renderFavoritesModal();
+      if (window.appState.selectedTreeId === treeId) openTreeDetail(treeId);
+
+      // Ardından veritabanına kaydet
+      try {
+        if (alreadyFav) {
+          await setDoc(doc(db, "users", uid), { favorites: arrayRemove(treeId) }, { merge: true });
+          window.showToast("Favorilerden çıkarıldı.");
+        } else {
+          await setDoc(doc(db, "users", uid), { favorites: arrayUnion(treeId) }, { merge: true });
+          window.showToast("Kaydettiğim Ağaçlar listesine eklendi! 🔖");
+        }
+      } catch (e) {
+        window.showToast("Kaydetme hatası: Bağlantını kontrol et.");
       }
     };
 
-    // Liderlik Tablosu Modalını Oluştur
     window.renderLeaderboardModal = function() {
       const container = document.getElementById("leaderboardListContainer");
       const userIds = new Set(Object.keys(window.appState.allUsers || {}));
@@ -1245,7 +1263,6 @@
       }).join("");
     };
 
-    // Puan Hesabı (+5 Ağaç, +3 Onay, +2 Durum Tazeleme, +1 Yorum)
     window.getUserStatsAndRank = function(uid) {
       const trees = window.appState.allTrees || [];
       const myTrees = trees.filter(t => t.userId === uid).length;
@@ -1709,7 +1726,6 @@
       badge.textContent = yesCount >= 2 ? "✅ Topluluk Onaylı" : "🌱 Yeni Kayıt";
       badge.className = "inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800";
 
-      // 15 Günlük Canlı Olgunluk Durumu Rozeti
       const ripeInfo = window.getRipenessStatus(tree);
       const ripeBadge = document.getElementById("detailRipenessBadge");
       ripeBadge.textContent = ripeInfo.badgeText;
@@ -1727,7 +1743,6 @@
       authorBtn.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${tree.userName} (Profilini Gör)`;
       authorBtn.onclick = () => window.openPublicUserProfile(tree.userId);
 
-      // Beğen Butonu
       const likeBtn = document.getElementById("likeTreeBtn");
       const heartIcon = document.getElementById("likeHeartIcon");
       document.getElementById("likeCountText").textContent = `Beğen (${likes.length})`;
@@ -1750,8 +1765,7 @@
         }
       };
 
-      // Favoriye Kaydet Butonu
-          // Favoriye Kaydet Butonu (Kaydedildiğinde Altın Sarısı)
+      // Favoriye Kaydet Butonu (Anında Altın Sarısı Renk Değişimi)
       const favBtn = document.getElementById("favTreeBtn");
       const favIcon = document.getElementById("favBookmarkIcon");
       document.getElementById("favBtnText").textContent = isFavByMe ? "Kaydedildi" : "Kaydet";
@@ -1762,8 +1776,6 @@
         favBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold border border-stone-200 bg-white text-stone-700 cursor-pointer transition";
         favIcon.className = "fa-regular fa-bookmark text-sm text-stone-600";
       }
-      favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
-
       favBtn.onclick = () => window.toggleFavoriteTree(tree.id);
 
       const photos = (tree.photos && tree.photos.length > 0) ? tree.photos : [tree.photo];
@@ -1866,7 +1878,6 @@
       window.showToast("Yorum kalıcı olarak silindi.");
     };
 
-    // Olgun / Ham / Geçti Güncelleme (15 Günlük Sayacı Sıfırlar +2 Puan)
     document.querySelectorAll(".ripe-update-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (!window.appState.currentUser) return window.showToast("Giriş yapmalısın.");
